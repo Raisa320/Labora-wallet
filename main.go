@@ -7,21 +7,15 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/raisa320/API/config"
-	"github.com/raisa320/API/controllers"
-	"github.com/raisa320/API/services"
+	"github.com/raisa320/Labora-wallet/config"
 )
 
 func myhandlers() http.Handler {
 	router := mux.NewRouter()
 
-	router.HandleFunc("/items", controllers.GetItems).Methods("GET")
-	router.HandleFunc("/itemsPerPage", controllers.GetItemsPage).Methods("GET")
-	router.HandleFunc("/items", controllers.SaveItem).Methods("POST")
-	router.HandleFunc("/items/{id}", controllers.GetItem).Methods("GET")
-	router.HandleFunc("/item", controllers.SearchItemByCustomer).Methods("GET")
-	router.HandleFunc("/items/{id}", controllers.UpdateItem).Methods("PUT")
-	router.HandleFunc("/items/{id}", controllers.DeleteItem).Methods("DELETE")
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Inbit  api"))
+	}).Methods("GET")
 
 	// Configura las opciones de CORS. Por ejemplo, permite todas las origenes:
 	allowedOrigins := handlers.AllowedOrigins([]string{"*"})
@@ -36,8 +30,8 @@ func main() {
 	port := flag.String("port", ":9000", "The server port")
 	flag.Parse()
 
-	services.InitDB()
-	services.Db.PingOrDie()
+	//services.InitDB()
+	//services.Db.PingOrDie()
 
 	router := myhandlers()
 
