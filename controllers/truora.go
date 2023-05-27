@@ -45,12 +45,12 @@ var ErrBadRequest error = errors.New("bad request")
 
 func BackgroundValidation(data io.ReadCloser) (*CheckResponse, error) {
 	url := fmt.Sprintf("%s/checks", API_URL)
-	dataValidated, err := ValidateData(data)
+	dataValidated, err := validateData(data)
 	if err != nil {
 		log.Fatalf("Error validate %v", err.Error())
 		return nil, err
 	}
-	response, err := CreateRequest("POST", url, dataValidated)
+	response, err := createRequest("POST", url, dataValidated)
 	if err != nil {
 		log.Fatalf("Error response  %v", err.Error())
 		return nil, err
@@ -58,7 +58,7 @@ func BackgroundValidation(data io.ReadCloser) (*CheckResponse, error) {
 	return response, nil
 }
 
-func ValidateData(data io.ReadCloser) (*strings.Reader, error) {
+func validateData(data io.ReadCloser) (*strings.Reader, error) {
 	var request ApiRequest
 	err := json.NewDecoder(data).Decode(&request)
 
@@ -93,7 +93,7 @@ func ValidateData(data io.ReadCloser) (*strings.Reader, error) {
 
 func ChecksDetails(checkId string) (*CheckResponse, error) {
 	url := fmt.Sprintf("%s/checks/%s", API_URL, checkId)
-	response, err := CreateRequest("GET", url, nil)
+	response, err := createRequest("GET", url, nil)
 	if err != nil {
 		log.Fatalf("Error checks details %v", err.Error())
 		return nil, err
@@ -101,7 +101,7 @@ func ChecksDetails(checkId string) (*CheckResponse, error) {
 	return response, nil
 }
 
-func GetApiKey() (string, error) {
+func getApiKey() (string, error) {
 	err := godotenv.Load(".env") //metodo para cargar nuestras variables de un file.
 	if err != nil {
 		log.Fatalf("Error loading .env file")
@@ -110,7 +110,7 @@ func GetApiKey() (string, error) {
 	return os.Getenv("Truora_API_Key"), nil
 }
 
-func CreateRequest(method string, url string, body io.Reader) (*CheckResponse, error) {
+func createRequest(method string, url string, body io.Reader) (*CheckResponse, error) {
 	client := &http.Client{}
 
 	req, err := http.NewRequest(method, url, body)
@@ -118,7 +118,7 @@ func CreateRequest(method string, url string, body io.Reader) (*CheckResponse, e
 		return nil, err
 	}
 
-	api_key, err := GetApiKey()
+	api_key, err := getApiKey()
 	if err != nil {
 		return nil, err
 	}
