@@ -23,5 +23,5 @@ To run this project, you will need to add the following environment variables to
 
 `DB_PASSWORD`
 
-`API_KEY`
+`Truora_API_Key`
 
