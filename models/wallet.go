@@ -4,7 +4,8 @@ import "time"
 
 type Wallet struct {
 	ID        string    `json:"id"`
-	Person_id string    `json:"name" validate:"required"`
-	Date      time.Time `json:"orderDate" validate:"required"`
+	Person_id string    `json:"personId" validate:"required"`
+	Date      time.Time `json:"date" validate:"required"`
 	Country   string    `json:"country"`
+	Deleted   bool      `json:"deleted"`
 }

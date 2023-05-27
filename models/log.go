@@ -8,4 +8,5 @@ type Log struct {
 	Date      time.Time `json:"date"`
 	Status    string    `json:"status"`
 	Country   string    `json:"country"`
+	Check_id  string    `json:"check_id"`
 }
