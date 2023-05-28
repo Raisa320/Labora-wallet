@@ -1,6 +1,9 @@
 package postgres
 
 import (
+	"context"
+	"database/sql"
+
 	"github.com/raisa320/Labora-wallet/models"
 )
 
@@ -14,7 +17,7 @@ func NewWalletStorage() *WalletStorage {
 // Gets all legal entities for a list of organizations
 func (repo *WalletStorage) GetAll() ([]models.Wallet, error) {
 	rows, err := Db.Query(`
-		SELECT *
+		SELECT id, person_id, date, country, amount
 		FROM wallet`)
 	if err != nil {
 		return nil, err
@@ -37,39 +40,71 @@ func (repo *WalletStorage) GetAll() ([]models.Wallet, error) {
 
 func (repo *WalletStorage) GetById(id int) (*models.Wallet, error) {
 	row := Db.QueryRow(`
-		SELECT *
+		SELECT id, person_id, date, country, amount
 		FROM wallet
 		WHERE id = $1`, id)
-	return scanWallet(row)
-}
-
-func (repo *WalletStorage) Create(animal models.Wallet) (*models.Wallet, error) {
-	createQuery := `INSERT INTO animal (name, kind) VALUES ($1, $2) returning id`
-	// err := Db.QueryRow(createQuery, animal.Name, animal.Kind).Scan(&animal.Id)
-	err := Db.QueryRow(createQuery)
-	if err != nil {
-		return nil, err.Err()
+	wallet, err := scanWallet(row)
+	if err == sql.ErrNoRows {
+		return nil, nil
 	}
-	return &animal, nil
+
+	return wallet, err
 }
 
-func (repo *WalletStorage) Update(animal models.Wallet) (*models.Wallet, error) {
-	// if animal.Id == nil {
-	// 	return nil, repositories.ErrEntityNotExists
-	// }
-	updateQuery := `UPDATE animal SET name = $1, kind = $2 WHERE id = $3`
-	// _, err := Db.Exec(updateQuery, animal.Name, animal.Kind, animal.Id)
-	_, err := Db.Exec(updateQuery)
+func (repo *WalletStorage) Create(ctx context.Context, wallet models.Wallet) (*models.Wallet, error) {
+	createQuery := `INSERT INTO wallet(
+		person_id, date, country)
+		VALUES ($1, $2, $3) returning id`
+	err := Db.QueryRowContext(ctx, createQuery, wallet.Person_id, wallet.Date, wallet.Country).Scan(&wallet.ID)
+
 	if err != nil {
 		return nil, err
 	}
-	return &animal, nil
+	return &wallet, nil
 }
 
-func (repo *WalletStorage) Delete(id int) (err error) {
-	deleteQuery := `DELETE FROM animal WHERE id`
-	_, err = Db.Exec(deleteQuery, id)
-	return
+func (repo *WalletStorage) Update(ctx context.Context, id int, wallet models.Wallet) (*models.Wallet, error) {
+	tx, err := Db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	updateQuery := `UPDATE wallet SET have_card=$1  WHERE id = $2`
+	_, err = tx.ExecContext(ctx, updateQuery, wallet.HavePhyscalCard, id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// No se encontró ningún objeto
+			tx.Commit()
+			return nil, nil
+		}
+		tx.Rollback()
+		return nil, err
+	}
+	selectQuery := `SELECT id, person_id, date, country, amount, have_card FROM wallet	WHERE id = $1`
+	err = tx.QueryRowContext(ctx, selectQuery, id).Scan(&wallet.ID, &wallet.Person_id, &wallet.Date, &wallet.Country, &wallet.Amount, &wallet.HavePhyscalCard)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+	tx.Commit()
+	return &wallet, nil
+}
+
+func (repo *WalletStorage) Delete(id int) (success bool, err error) {
+
+	deleteQuery := `DELETE FROM wallet WHERE id = $1`
+	result, err := Db.Exec(deleteQuery, id)
+	if err != nil {
+		return false, err
+	}
+	numberRowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	if numberRowsAffected == 0 {
+		return false, nil
+	}
+	return true, nil
 
 }
 
@@ -77,7 +112,7 @@ func (repo *WalletStorage) Delete(id int) (err error) {
 func scanWallet(rows RowScanner) (*models.Wallet, error) {
 	var wallet models.Wallet
 
-	err := rows.Scan(&wallet.ID, &wallet.Person_id, &wallet.Date, &wallet.Country)
+	err := rows.Scan(&wallet.ID, &wallet.Person_id, &wallet.Date, &wallet.Country, &wallet.Amount)
 	if err != nil {
 		return nil, err
 	}

@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -11,16 +10,11 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/go-playground/validator"
 	"github.com/joho/godotenv"
 )
-
-type Base struct {
-	National_id string `json:"national_id" validate:"required"`
-	Country     string `json:"country" validate:"required"`
-	Type        string `json:"type" validate:"required"`
-}
 
 type ApiRequest struct {
 	National_id    string `json:"national_id" validate:"required"`
@@ -30,10 +24,12 @@ type ApiRequest struct {
 }
 
 type CheckResponse struct {
-	Base
-	Check_id      string `json:"check_id"`
-	Creation_date string `json:"creation_date"`
-	Score         int    `json:"score"`
+	National_id   string    `json:"national_id"`
+	Country       string    `json:"country"`
+	Type          string    `json:"type"`
+	Check_id      string    `json:"check_id"`
+	Creation_date time.Time `json:"creation_date"`
+	Score         int       `json:"score"`
 }
 
 type Response struct {
@@ -41,40 +37,41 @@ type Response struct {
 }
 
 var API_URL = "https://api.checks.truora.com/v1"
-var ErrBadRequest error = errors.New("bad request")
 
-func BackgroundValidation(data io.ReadCloser) (*CheckResponse, error) {
+func BackgroundValidation(data io.ReadCloser) (*CheckResponse, *Error) {
 	url := fmt.Sprintf("%s/checks", API_URL)
 	dataValidated, err := validateData(data)
 	if err != nil {
-		log.Fatalf("Error validate %v", err.Error())
 		return nil, err
 	}
+
 	response, err := createRequest("POST", url, dataValidated)
 	if err != nil {
-		log.Fatalf("Error response  %v", err.Error())
 		return nil, err
 	}
 	return response, nil
 }
 
-func validateData(data io.ReadCloser) (*strings.Reader, error) {
+func validateData(data io.ReadCloser) (*strings.Reader, *Error) {
 	var request ApiRequest
 	err := json.NewDecoder(data).Decode(&request)
 
 	if err != nil {
+		var errResp Error
 		if err == io.EOF {
-			log.Fatal("Error: JSON incompleto")
+			errResp = Error{StatusCode: http.StatusBadRequest, Message: "Error: JSON incompleto"}
 		} else {
-			log.Fatal("Error al decodificar el JSON:", err)
+			errResp = Error{StatusCode: http.StatusInternalServerError, Message: fmt.Sprintf("Error al decodificar el JSON: %v", err)}
 		}
+		return nil, &errResp
 	}
 
 	validate := validator.New()
 
 	err = validate.Struct(request)
 	if err != nil {
-		return nil, err
+		errResp := Error{StatusCode: http.StatusBadRequest, Message: err.Error()}
+		return nil, &errResp
 	}
 
 	formData := url.Values{}
@@ -91,11 +88,10 @@ func validateData(data io.ReadCloser) (*strings.Reader, error) {
 	return strings.NewReader(formData.Encode()), nil
 }
 
-func ChecksDetails(checkId string) (*CheckResponse, error) {
+func ChecksDetails(checkId string) (*CheckResponse, *Error) {
 	url := fmt.Sprintf("%s/checks/%s", API_URL, checkId)
 	response, err := createRequest("GET", url, nil)
 	if err != nil {
-		log.Fatalf("Error checks details %v", err.Error())
 		return nil, err
 	}
 	return response, nil
@@ -110,17 +106,19 @@ func getApiKey() (string, error) {
 	return os.Getenv("Truora_API_Key"), nil
 }
 
-func createRequest(method string, url string, body io.Reader) (*CheckResponse, error) {
+func createRequest(method string, url string, body io.Reader) (*CheckResponse, *Error) {
 	client := &http.Client{}
 
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
-		return nil, err
+		errResp := Error{StatusCode: http.StatusInternalServerError, Message: err.Error()}
+		return nil, &errResp
 	}
 
 	api_key, err := getApiKey()
 	if err != nil {
-		return nil, err
+		errResp := Error{StatusCode: http.StatusInternalServerError, Message: err.Error()}
+		return nil, &errResp
 	}
 
 	// Agregar encabezados a la solicitud
@@ -129,19 +127,21 @@ func createRequest(method string, url string, body io.Reader) (*CheckResponse, e
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		errResp := Error{StatusCode: http.StatusInternalServerError, Message: err.Error()}
+		return nil, &errResp
 	}
 
 	defer resp.Body.Close()
 
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatal(err)
-		return nil, err
+		errResp := Error{StatusCode: http.StatusInternalServerError, Message: err.Error()}
+		return nil, &errResp
 	}
 
 	if resp.StatusCode >= 400 {
-		return nil, ErrBadRequest
+		errResp := Error{StatusCode: resp.StatusCode, Message: "Error response API"}
+		return nil, &errResp
 	}
 
 	// Procesar la respuesta de la solicitud HTTP
@@ -149,7 +149,8 @@ func createRequest(method string, url string, body io.Reader) (*CheckResponse, e
 	err = json.Unmarshal([]byte(bodyBytes), &response)
 
 	if err != nil {
-		return nil, err
+		errResp := Error{StatusCode: http.StatusInternalServerError, Message: err.Error()}
+		return nil, &errResp
 	}
 	return &response.Body, nil
 }

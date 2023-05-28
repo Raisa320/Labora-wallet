@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS public.wallet
     person_id character varying(15) COLLATE pg_catalog."default" NOT NULL,
     date date NOT NULL,
     country character varying(4) COLLATE pg_catalog."default" NOT NULL,
-    deleted boolean DEFAULT 'false',
+    amount numeric NOT NULL DEFAULT 0,
+    have_card boolean DEFAULT 'false',
     CONSTRAINT wallet_pkey PRIMARY KEY (id)
 )
 
