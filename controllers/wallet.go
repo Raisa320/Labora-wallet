@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 
-	"github.com/gorilla/mux"
 	"github.com/raisa320/Labora-wallet/models"
 	"github.com/raisa320/Labora-wallet/repositories"
 	"github.com/raisa320/Labora-wallet/repositories/postgres"
@@ -80,11 +78,9 @@ func CreateWallet(response http.ResponseWriter, request *http.Request) {
 
 func UpdateWallet(response http.ResponseWriter, request *http.Request) {
 	var data MyResponse = MyResponse{}
-
-	paramId := mux.Vars(request)["id"]
-	id, err := strconv.Atoi(paramId)
+	id, err := UrlParamInt(request, "id")
 	if err != nil {
-		data.SetSimpleMessage(fmt.Sprintf("Can not parse id from '%s'", paramId))
+		data.SetSimpleMessage(err.Error())
 		WriteJsonResponse(response, http.StatusBadRequest, data.Body)
 		return
 	}
@@ -92,7 +88,7 @@ func UpdateWallet(response http.ResponseWriter, request *http.Request) {
 	var wallet models.Wallet
 	json.NewDecoder(request.Body).Decode(&wallet)
 
-	walletUpdated, err := walletRepository.Update(request.Context(), id, wallet)
+	walletUpdated, err := walletRepository.Update(request.Context(), *id, wallet)
 	if err != nil {
 		data.SetSimpleMessage(err.Error())
 		WriteJsonResponse(response, http.StatusInternalServerError, data.Body)
@@ -109,14 +105,14 @@ func UpdateWallet(response http.ResponseWriter, request *http.Request) {
 
 func DeleteWallet(response http.ResponseWriter, request *http.Request) {
 	var data MyResponse = MyResponse{}
-	paramId := mux.Vars(request)["id"]
-	id, err := strconv.Atoi(paramId)
+	id, err := UrlParamInt(request, "id")
 	if err != nil {
-		data.SetSimpleMessage(fmt.Sprintf("Can not parse id from '%s'", paramId))
+		data.SetSimpleMessage(err.Error())
 		WriteJsonResponse(response, http.StatusBadRequest, data.Body)
 		return
 	}
-	success, err := walletRepository.Delete(id)
+
+	success, err := walletRepository.Delete(*id)
 	if err != nil {
 		data.SetSimpleMessage(err.Error())
 		WriteJsonResponse(response, http.StatusInternalServerError, data.Body)

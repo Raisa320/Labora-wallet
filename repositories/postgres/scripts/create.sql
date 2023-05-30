@@ -36,3 +36,29 @@ TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS public.log
     OWNER to postgres;
+
+
+CREATE TABLE IF NOT EXISTS public.transaction
+(
+    id integer NOT NULL DEFAULT 'nextval('transaction_id_seq'::regclass)',
+    amount numeric NOT NULL,
+    type character varying(20) COLLATE pg_catalog."default" NOT NULL,
+    "walletReceive_id" integer NOT NULL,
+    "walletOrigin_id" integer NOT NULL,
+    CONSTRAINT transaction_pkey PRIMARY KEY (id),
+    CONSTRAINT "Transaction_walletOrigin_id_fkey" FOREIGN KEY ("walletOrigin_id")
+        REFERENCES public.wallet (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+        NOT VALID,
+    CONSTRAINT "Transaction_wallet_id_fkey" FOREIGN KEY ("walletReceive_id")
+        REFERENCES public.wallet (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+        NOT VALID
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.transaction
+    OWNER to postgres;

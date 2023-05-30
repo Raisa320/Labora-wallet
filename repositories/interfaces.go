@@ -25,3 +25,9 @@ type Log interface {
 	GetByPersonId(personId string) (*models.Log, error)
 	Create(ctx context.Context, log models.Log) (created *models.Log, err error)
 }
+
+type Transaction interface {
+	GetById(id int) (*models.Transaction, error)
+	GetByWallet(walletId int) ([]models.Transaction, error)
+	Create(ctx context.Context, transaction models.Transaction) (created *models.Transaction, err error)
+}

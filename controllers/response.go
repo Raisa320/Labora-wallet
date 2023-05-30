@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 type Error struct {
@@ -43,4 +46,13 @@ func UrlQueryParam(request *http.Request, name string) (*string, error) {
 		return nil, fmt.Errorf("no url param present with the name: %v", name)
 	}
 	return &param, nil
+}
+
+func UrlParamInt(request *http.Request, name string) (*int, error) {
+	param := mux.Vars(request)[name]
+	paramInt, err := strconv.Atoi(param)
+	if err != nil {
+		return nil, fmt.Errorf("can not parse id from %v", param)
+	}
+	return &paramInt, nil
 }
