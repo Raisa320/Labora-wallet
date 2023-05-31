@@ -18,7 +18,7 @@ type DbConfig struct {
 func LoadEnvVariables() (DbConfig, error) {
 	err := godotenv.Load(".env") //metodo para cargar nuestras variables de un file.
 	if err != nil {
-		log.Fatalf("Error loading .env file")
+		log.Fatalf("Error loading .env file: %s", err)
 		return DbConfig{}, err
 	}
 	return DbConfig{

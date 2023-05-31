@@ -38,7 +38,7 @@ func connect_BD() error {
 	dbConfig, errDb := repositories.LoadEnvVariables()
 
 	if errDb != nil {
-		log.Fatalf("Error loading .env file")
+		log.Fatalf("Error loading .env file: %s", errDb)
 	}
 
 	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", dbConfig.Host, dbConfig.Port, dbConfig.User, dbConfig.Password, dbConfig.DbName)
