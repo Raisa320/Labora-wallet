@@ -33,6 +33,16 @@ To run this project, you will need to add the following environment variables to
   GET /api/v1/wallets
 ```
 
+#### Get One wallet
+
+```http
+  GET /api/v1/wallets/{id}
+```
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `id`      | `int` | **Required**. Id of wallet to fetch |
+
 #### Post wallet
 
 ```http
@@ -82,6 +92,28 @@ To run this project, you will need to add the following environment variables to
 | :-------- | :------- | :-------------------------------- |
 | `personId`      | `string` | **Required**. Personal identification associated with a wallet to fetch |
 
+#### Post Transaction
+
+```http
+  POST /api/v1/transactions
+```
+`Body Request`
+
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `source`      | `int` | **Required**. Id de la wallet que realizará el envio |
+| `destiny`      | `int` | **Required**. Id de la wallet que recibirá el envio |
+| `type`      | `int` | **Required**. Tipo de envio: 1 para deposito, 2 para retiro |
+
+```json
+{
+    "amount": 30,
+    "source": 9,
+    "destiny": 10,
+    "type": 1
+}
+
+```
 
 ## Run Locally
 
