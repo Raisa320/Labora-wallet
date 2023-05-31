@@ -25,6 +25,7 @@ func buildRouter() http.Handler {
 	api.HandleFunc("/wallets/{id:[0-9]+}", controllers.DeleteWallet).Methods("DELETE")
 	api.HandleFunc("/wallets/status", controllers.StatusWallet).Methods("GET")
 	api.HandleFunc("/transactions/{id:[0-9]+}", controllers.GetTransaction).Methods("GET")
+	api.HandleFunc("/transactions", controllers.CreateTransaction).Methods("POST")
 
 	// Configura las opciones de CORS. Por ejemplo, permite todas las origenes:
 	allowedOrigins := handlers.AllowedOrigins([]string{"*"})

@@ -9,6 +9,8 @@ type Log struct {
 	Status    bool      `json:"status"`
 	Country   string    `json:"country"`
 	Check_id  string    `json:"check_id"`
+	Type      string    `json:"type"`
+	Message   string    `json:"message"`
 }
 
 func (log *Log) SetStatus(score int) {

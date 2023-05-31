@@ -113,6 +113,15 @@ func (repo *WalletStorage) Delete(id int) (success bool, err error) {
 
 }
 
+func (repo *WalletStorage) UpdateAmount(amount float64, wallet models.WalletDTO) error {
+	updateQuery := `UPDATE wallet SET amount=$1  WHERE id = $2`
+	_, err := Db.Exec(updateQuery, amount, wallet.ID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // Scans a row interpreting it as 'models.Wallet' struct
 func scanWallet(rows RowScanner) (*models.Wallet, error) {
 	var wallet models.Wallet

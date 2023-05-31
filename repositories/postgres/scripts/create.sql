@@ -24,11 +24,13 @@ ALTER TABLE IF EXISTS public.wallet
 CREATE TABLE IF NOT EXISTS public.log
 (
     id integer NOT NULL DEFAULT 'nextval('log_id_seq'::regclass)',
-    person_id character varying COLLATE pg_catalog."default" NOT NULL,
+    person_id character varying COLLATE pg_catalog."default",
     date date NOT NULL,
     status boolean NOT NULL,
-    country character varying(4) COLLATE pg_catalog."default" NOT NULL,
-    check_id character varying COLLATE pg_catalog."default" NOT NULL,
+    country character varying(4) COLLATE pg_catalog."default",
+    check_id character varying COLLATE pg_catalog."default",
+    type character varying(20) COLLATE pg_catalog."default",
+    message character varying COLLATE pg_catalog."default",
     CONSTRAINT log_pkey PRIMARY KEY (id)
 )
 

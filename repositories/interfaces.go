@@ -17,6 +17,7 @@ type Wallet interface {
 	Create(ctx context.Context, wallet models.Wallet) (created *models.Wallet, err error)
 	Update(ctx context.Context, id int, wallet models.Wallet) (updated *models.Wallet, err error)
 	Delete(id int) (success bool, err error)
+	UpdateAmount(amount float64, wallet models.WalletDTO) error
 }
 
 type Log interface {
@@ -29,5 +30,5 @@ type Log interface {
 type Transaction interface {
 	GetById(ctx context.Context, id int) (*models.TransactionDTO, error)
 	GetByWallet(walletId int) ([]models.TransactionDTO, error)
-	Create(ctx context.Context, transaction models.Transaction) (created *models.Transaction, err error)
+	Create(ctx context.Context, transaction models.Transaction) error
 }

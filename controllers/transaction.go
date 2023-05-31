@@ -1,8 +1,11 @@
 package controllers
 
 import (
+	"encoding/json"
 	"net/http"
+	"time"
 
+	"github.com/raisa320/Labora-wallet/models"
 	"github.com/raisa320/Labora-wallet/repositories"
 	"github.com/raisa320/Labora-wallet/repositories/postgres"
 )
@@ -59,4 +62,24 @@ func GetTransactionsByWallet(response http.ResponseWriter, request *http.Request
 		return
 	}
 	WriteJsonResponse(response, http.StatusOK, transactions)
+}
+
+func CreateTransaction(response http.ResponseWriter, request *http.Request) {
+	var data MyResponse = MyResponse{}
+	var transaction models.Transaction
+	json.NewDecoder(request.Body).Decode(&transaction)
+	err := TransactionRepository.Create(request.Context(), transaction)
+	if err != nil {
+		var log models.Log = models.Log{
+			Date:    time.Now(),
+			Type:    "Transaction",
+			Message: err.Error(),
+		}
+		logRepository.Create(request.Context(), log)
+		data.SetSimpleMessage(err.Error())
+		WriteJsonResponse(response, http.StatusInternalServerError, data.Body)
+		return
+	}
+	data.SetSimpleMessage("Succesful transaction")
+	WriteJsonResponse(response, http.StatusOK, data.Body)
 }

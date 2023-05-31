@@ -3,12 +3,17 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"sync"
 
+	"github.com/go-playground/validator"
 	"github.com/raisa320/Labora-wallet/models"
 )
 
 type TransactionStorage struct {
 }
+
+var mutex sync.Mutex
 
 func NewTransactionStorage() *TransactionStorage {
 	return &TransactionStorage{}
@@ -67,6 +72,66 @@ func (repo *TransactionStorage) GetByWallet(walletId int) ([]models.TransactionD
 	return transactions, nil
 }
 
-func (repo *TransactionStorage) Create(ctx context.Context, transaction models.Transaction) (created *models.Transaction, err error) {
-	return nil, nil
+func (repo *TransactionStorage) Create(ctx context.Context, transaction models.Transaction) error {
+	mutex.Lock()
+	validate := validator.New()
+
+	err := validate.Struct(transaction)
+	if err != nil {
+		return err
+	}
+	if transaction.Type <= 0 || transaction.Type > 2 {
+		return fmt.Errorf("not valid type of transaction")
+	}
+	tx, err := Db.Begin()
+	if err != nil {
+		return err
+	}
+
+	walletSource, err := NewWalletStorage().GetById(transaction.SourceId)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	walletDestiny, err := NewWalletStorage().GetById(transaction.DestinyId)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if walletSource.Amount < transaction.Amount {
+		tx.Rollback()
+		return fmt.Errorf("insufficient funds to process the withdrawal: %v current balance", walletSource.Amount)
+	}
+
+	if transaction.Type == 2 && walletSource.ID != walletDestiny.ID {
+		tx.Rollback()
+		return fmt.Errorf("it is not a valid operation")
+	}
+
+	amoutSource := walletSource.Amount - transaction.Amount
+	amoutDestiny := walletDestiny.Amount + transaction.Amount
+	err = NewWalletStorage().UpdateAmount(amoutSource, *walletSource)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	err = NewWalletStorage().UpdateAmount(amoutDestiny, *walletDestiny)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	createQuery := `INSERT INTO transaction(
+	amount, destiny_id, source_id, type)
+	VALUES ($1, $2, $3, $4) returning id`
+	err = Db.QueryRowContext(ctx, createQuery, transaction.Amount, transaction.DestinyId, transaction.SourceId, transaction.Type).Scan(&transaction.Id)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	tx.Commit()
+	mutex.Unlock()
+	return nil
 }
