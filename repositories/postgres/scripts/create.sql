@@ -42,16 +42,17 @@ CREATE TABLE IF NOT EXISTS public.transaction
 (
     id integer NOT NULL DEFAULT 'nextval('transaction_id_seq'::regclass)',
     amount numeric NOT NULL,
-    type character varying(20) COLLATE pg_catalog."default" NOT NULL,
-    "walletReceive_id" integer NOT NULL,
-    "walletOrigin_id" integer NOT NULL,
+    destiny_id integer NOT NULL,
+    source_id integer NOT NULL,
+    type integer NOT NULL,
+    date date NOT NULL DEFAULT 'CURRENT_DATE',
     CONSTRAINT transaction_pkey PRIMARY KEY (id),
-    CONSTRAINT "Transaction_walletOrigin_id_fkey" FOREIGN KEY ("walletOrigin_id")
+    CONSTRAINT "Transaction_destiny_id_fkey" FOREIGN KEY (destiny_id)
         REFERENCES public.wallet (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
         NOT VALID,
-    CONSTRAINT "Transaction_wallet_id_fkey" FOREIGN KEY ("walletReceive_id")
+    CONSTRAINT "Transaction_source_id_fkey" FOREIGN KEY (source_id)
         REFERENCES public.wallet (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION

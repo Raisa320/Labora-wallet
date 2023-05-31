@@ -16,16 +16,15 @@ type Server struct {
 
 func buildRouter() http.Handler {
 	router := mux.NewRouter()
+	api := router.PathPrefix("/api/v1").Subrouter()
 
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Init  api"))
-	}).Methods("GET")
-
-	router.HandleFunc("/api/v1/wallets", controllers.GetAll).Methods("GET")
-	router.HandleFunc("/api/v1/wallets", controllers.CreateWallet).Methods("POST")
-	router.HandleFunc("/api/v1/wallets/{id:[0-9]+}", controllers.UpdateWallet).Methods("PUT")
-	router.HandleFunc("/api/v1/wallets/{id:[0-9]+}", controllers.DeleteWallet).Methods("DELETE")
-	router.HandleFunc("/api/v1/wallets/status", controllers.StatusWallet).Methods("GET")
+	api.HandleFunc("/wallets", controllers.GetAll).Methods("GET")
+	api.HandleFunc("/wallets/{id:[0-9]+}", controllers.GetWalletById).Methods("GET")
+	api.HandleFunc("/wallets", controllers.CreateWallet).Methods("POST")
+	api.HandleFunc("/wallets/{id:[0-9]+}", controllers.UpdateWallet).Methods("PUT")
+	api.HandleFunc("/wallets/{id:[0-9]+}", controllers.DeleteWallet).Methods("DELETE")
+	api.HandleFunc("/wallets/status", controllers.StatusWallet).Methods("GET")
+	api.HandleFunc("/transactions/{id:[0-9]+}", controllers.GetTransaction).Methods("GET")
 
 	// Configura las opciones de CORS. Por ejemplo, permite todas las origenes:
 	allowedOrigins := handlers.AllowedOrigins([]string{"*"})

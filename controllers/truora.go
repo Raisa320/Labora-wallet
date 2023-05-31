@@ -30,6 +30,12 @@ type CheckResponse struct {
 	Check_id      string    `json:"check_id"`
 	Creation_date time.Time `json:"creation_date"`
 	Score         int       `json:"score"`
+	Summary       struct {
+		NamesFound []struct {
+			FirstName string `json:"first_name"`
+			LastName  string `json:"last_name"`
+		} `json:"names_found"`
+	} `json:"summary"`
 }
 
 type Response struct {

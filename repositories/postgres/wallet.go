@@ -38,24 +38,29 @@ func (repo *WalletStorage) GetAll() ([]models.Wallet, error) {
 	return wallets, nil
 }
 
-func (repo *WalletStorage) GetById(id int) (*models.Wallet, error) {
+func (repo *WalletStorage) GetById(id int) (*models.WalletDTO, error) {
 	row := Db.QueryRow(`
-		SELECT id, person_id, date, country, amount
+		SELECT id, person_name, amount
 		FROM wallet
 		WHERE id = $1`, id)
-	wallet, err := scanWallet(row)
+	var wallet models.WalletDTO
+	err := row.Scan(&wallet.ID, &wallet.PersonName, &wallet.Amount)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
-
-	return wallet, err
+	transactions, err := NewTransactionStorage().GetByWallet(id)
+	if err != nil {
+		return nil, err
+	}
+	wallet.Transaction = transactions
+	return &wallet, err
 }
 
 func (repo *WalletStorage) Create(ctx context.Context, wallet models.Wallet) (*models.Wallet, error) {
 	createQuery := `INSERT INTO wallet(
-		person_id, date, country)
-		VALUES ($1, $2, $3) returning id`
-	err := Db.QueryRowContext(ctx, createQuery, wallet.Person_id, wallet.Date, wallet.Country).Scan(&wallet.ID)
+		person_id, date, country, person_name)
+		VALUES ($1, $2, $3, $4) returning id`
+	err := Db.QueryRowContext(ctx, createQuery, wallet.Person_id, wallet.Date, wallet.Country, wallet.PersonName).Scan(&wallet.ID)
 
 	if err != nil {
 		return nil, err

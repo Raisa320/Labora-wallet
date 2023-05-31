@@ -45,6 +45,7 @@ func CreateWallet(response http.ResponseWriter, request *http.Request) {
 		Country:   dataValidated.Country,
 		Check_id:  dataValidated.Check_id,
 	}
+	fmt.Println("SCORE:", dataValidated.Score)
 	log.SetStatus(dataValidated.Score)
 
 	_, errCreate := logRepository.Create(request.Context(), log)
@@ -56,9 +57,10 @@ func CreateWallet(response http.ResponseWriter, request *http.Request) {
 
 	if log.Status {
 		var wallet models.Wallet = models.Wallet{
-			Person_id: dataValidated.National_id,
-			Date:      dataValidated.Creation_date,
-			Country:   dataValidated.Country,
+			Person_id:  dataValidated.National_id,
+			Date:       dataValidated.Creation_date,
+			Country:    dataValidated.Country,
+			PersonName: fmt.Sprintf("%s %s", dataValidated.Summary.NamesFound[0].FirstName, dataValidated.Summary.NamesFound[0].LastName),
 		}
 		_, err := walletRepository.Create(request.Context(), wallet)
 		if err != nil {
@@ -151,4 +153,28 @@ func StatusWallet(response http.ResponseWriter, request *http.Request) {
 		"StatusWallet": log.GetStatus(),
 	}
 	WriteJsonResponse(response, http.StatusOK, jsonResponse)
+}
+
+func GetWalletById(response http.ResponseWriter, request *http.Request) {
+	var data MyResponse = MyResponse{}
+	id, err := UrlParamInt(request, "id")
+	if err != nil {
+		data.SetSimpleMessage(err.Error())
+		WriteJsonResponse(response, http.StatusBadRequest, data.Body)
+		return
+	}
+
+	wallet, err := walletRepository.GetById(*id)
+	if err != nil {
+		data.SetSimpleMessage(err.Error())
+		WriteJsonResponse(response, http.StatusInternalServerError, data.Body)
+		return
+	}
+
+	if wallet == nil {
+		data.SetSimpleMessage("Wallet not found")
+		WriteJsonResponse(response, http.StatusNotFound, data.Body)
+		return
+	}
+	WriteJsonResponse(response, http.StatusOK, wallet)
 }
