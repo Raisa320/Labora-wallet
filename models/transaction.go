@@ -8,7 +8,7 @@ type Transaction struct {
 	Date      time.Time `json:"date"`
 	DestinyId int       `json:"destiny" validate:"required"`
 	SourceId  int       `json:"source" validate:"required"`
-	Type      int       `json:"type" validate:"required"`
+	Type      int       `json:"type" validate:"required"` //1="Deposito" , 2=Retiro
 }
 
 type TransactionDTO struct {

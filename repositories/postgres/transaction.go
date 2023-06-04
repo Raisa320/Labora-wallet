@@ -83,55 +83,56 @@ func (repo *TransactionStorage) Create(ctx context.Context, transaction models.T
 	if transaction.Type <= 0 || transaction.Type > 2 {
 		return fmt.Errorf("not valid type of transaction")
 	}
+
 	tx, err := Db.Begin()
 	if err != nil {
 		return err
 	}
 
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
+		mutex.Unlock()
+	}()
+
 	walletSource, err := NewWalletStorage().GetById(transaction.SourceId)
 	if err != nil {
-		tx.Rollback()
 		return err
 	}
 
 	walletDestiny, err := NewWalletStorage().GetById(transaction.DestinyId)
 	if err != nil {
-		tx.Rollback()
 		return err
 	}
 
 	if walletSource.Amount < transaction.Amount {
-		tx.Rollback()
 		return fmt.Errorf("insufficient funds to process the withdrawal: %v current balance", walletSource.Amount)
 	}
 
 	if transaction.Type == 2 && walletSource.ID != walletDestiny.ID {
-		tx.Rollback()
 		return fmt.Errorf("it is not a valid operation")
 	}
 
 	amoutSource := walletSource.Amount - transaction.Amount
 	amoutDestiny := walletDestiny.Amount + transaction.Amount
-	err = NewWalletStorage().UpdateAmount(amoutSource, *walletSource)
+	err = NewWalletStorage().UpdateAmount(amoutSource, *walletSource, tx)
 	if err != nil {
-		tx.Rollback()
 		return err
 	}
-	err = NewWalletStorage().UpdateAmount(amoutDestiny, *walletDestiny)
+	err = NewWalletStorage().UpdateAmount(amoutDestiny, *walletDestiny, tx)
 	if err != nil {
-		tx.Rollback()
 		return err
 	}
 
 	createQuery := `INSERT INTO transaction(
 	amount, destiny_id, source_id, type)
 	VALUES ($1, $2, $3, $4) returning id`
-	err = Db.QueryRowContext(ctx, createQuery, transaction.Amount, transaction.DestinyId, transaction.SourceId, transaction.Type).Scan(&transaction.Id)
+	err = tx.QueryRowContext(ctx, createQuery, transaction.Amount, transaction.DestinyId, transaction.SourceId, transaction.Type).Scan(&transaction.Id)
 	if err != nil {
-		tx.Rollback()
 		return err
 	}
-	tx.Commit()
-	mutex.Unlock()
 	return nil
 }

@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/raisa320/Labora-wallet/models"
 )
@@ -22,4 +23,5 @@ func TestCreate(t *testing.T) {
 	go func() {
 		NewTransactionStorage().Create(ctx, transaction)
 	}()
+	time.Sleep(3 * time.Second)
 }

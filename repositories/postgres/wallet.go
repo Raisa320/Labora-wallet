@@ -113,9 +113,9 @@ func (repo *WalletStorage) Delete(id int) (success bool, err error) {
 
 }
 
-func (repo *WalletStorage) UpdateAmount(amount float64, wallet models.WalletDTO) error {
+func (repo *WalletStorage) UpdateAmount(amount float64, wallet models.WalletDTO, tx *sql.Tx) error {
 	updateQuery := `UPDATE wallet SET amount=$1  WHERE id = $2`
-	_, err := Db.Exec(updateQuery, amount, wallet.ID)
+	_, err := tx.Exec(updateQuery, amount, wallet.ID)
 	if err != nil {
 		return err
 	}

@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 
 	"github.com/raisa320/Labora-wallet/models"
@@ -17,7 +18,7 @@ type Wallet interface {
 	Create(ctx context.Context, wallet models.Wallet) (created *models.Wallet, err error)
 	Update(ctx context.Context, id int, wallet models.Wallet) (updated *models.Wallet, err error)
 	Delete(id int) (success bool, err error)
-	UpdateAmount(amount float64, wallet models.WalletDTO) error
+	UpdateAmount(amount float64, wallet models.WalletDTO, tx *sql.Tx) error
 }
 
 type Log interface {
