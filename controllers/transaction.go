@@ -72,6 +72,7 @@ func CreateTransaction(response http.ResponseWriter, request *http.Request) {
 	if err != nil {
 		var log models.Log = models.Log{
 			Date:    time.Now(),
+			Status:  false,
 			Type:    "Transaction",
 			Message: err.Error(),
 		}

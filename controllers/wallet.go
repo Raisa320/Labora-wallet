@@ -44,6 +44,8 @@ func CreateWallet(response http.ResponseWriter, request *http.Request) {
 		Date:      dataValidated.Creation_date,
 		Country:   dataValidated.Country,
 		Check_id:  dataValidated.Check_id,
+		Type:      "Wallet",
+		Message:   "Ok",
 	}
 	fmt.Println("SCORE:", dataValidated.Score)
 	log.SetStatus(dataValidated.Score)
