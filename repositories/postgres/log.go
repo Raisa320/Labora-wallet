@@ -60,7 +60,7 @@ func (repo *LogStorage) GetByPersonId(personId string) (*models.Log, error) {
 func (repo *LogStorage) Create(ctx context.Context, log models.Log) (*models.Log, error) {
 	createQuery := `INSERT INTO log(
 		person_id, date, status, country, check_id, type, message)
-		VALUES ($1, $2, $3, $4, $5) returning id`
+		VALUES ($1, $2, $3, $4, $5, $6, $7) returning id`
 	row := Db.QueryRowContext(
 		ctx, createQuery, log.Person_id, log.Date, log.Status, log.Country, log.Check_id, log.Type, log.Message)
 	err := row.Scan(&log.ID)
